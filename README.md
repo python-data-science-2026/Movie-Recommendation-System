@@ -1,2 +1,10 @@
 # Movie-Recommendation-System
-This project aim to create a movie recommendation system to help users to discover new movies based on their preferences
+
+The goal of this project is to develop a personalized movie recommendation system that helps users discover new films.
+
+## Group members 
+
+- Mario González
+- Dario Walker
+- Harsh Nayak
+- Moïse Meka
