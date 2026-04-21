@@ -1,0 +1,27 @@
+[project]
+name = "movie-recommendation-system"
+version = "0.1.0"
+description = "The goal of this project is to develop a personalized movie recommendation system that helps users discover new films."
+authors = [
+    {name = "Moise MEKA",email = "moise.meka@students.unibe.ch"},
+    {name = "Mario González"},
+    {name = "Dario Walker"},
+    {name = "Harsh Nayak"}
+]
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "numpy (>=2.4.4,<3.0.0)",
+    "pandas (>=3.0.2,<4.0.0)"
+]
+
+[tool.poetry]
+packages = [{ include = "*", from = "modules" }]
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^9.0.2"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
