@@ -1,4 +1,4 @@
-import csv
+import pandas as pd
 from movie import Movie
 
 
@@ -32,39 +32,37 @@ class MovieService:
         return max(genre_count, key=genre_count.get)
 
     def import_movies_from_csv(self, file_path):
+        required_columns = ["title", "year", "genre", "rating"]
+
+        df = pd.read_csv(file_path)
+
+        for col in required_columns:
+            if col not in df.columns:
+                raise ValueError(f"Missing required column: {col}")
+
+        df = df.dropna(subset=required_columns)
+
+        df["year"] = pd.to_numeric(df["year"], errors="coerce")
+        df["rating"] = pd.to_numeric(df["rating"], errors="coerce")
+        df = df.dropna(subset=["year", "rating"])
+
+        df["year"] = df["year"].astype(int)
+        df["actor"] = df["actor"].fillna("") if "actor" in df.columns else ""
+        df["director"] = df["director"].fillna("") if "director" in df.columns else ""
+        df["notes"] = df["notes"].fillna("") if "notes" in df.columns else ""
+
         imported_count = 0
-
-        with open(file_path, mode="r", encoding="utf-8", newline="") as file:
-            reader = csv.DictReader(file)
-
-            required_fields = ["title", "year", "genre", "rating"]
-
-            if reader.fieldnames is None:
-                raise ValueError("The CSV file is empty or has no header.")
-
-            for field in required_fields:
-                if field not in reader.fieldnames:
-                    raise ValueError(f"Missing required column: {field}")
-
-            for row in reader:
-                title = row["title"].strip()
-                genre = row["genre"].strip()
-
-                if not title or not genre:
-                    continue
-
-                try:
-                    year = int(row["year"])
-                    rating = float(row["rating"])
-                except ValueError:
-                    continue
-
-                actor = row.get("actor", "").strip()
-                director = row.get("director", "").strip()
-                notes = row.get("notes", "").strip()
-
-                movie = Movie(title, year, genre, rating, actor, director, notes)
-                self.add_movie(movie)
-                imported_count += 1
+        for _, row in df.iterrows():
+            movie = Movie(
+                title=str(row["title"]).strip(),
+                year=int(row["year"]),
+                genre=str(row["genre"]).strip(),
+                rating=float(row["rating"]),
+                actor=str(row["actor"]).strip(),
+                director=str(row["director"]).strip(),
+                notes=str(row["notes"]).strip(),
+            )
+            self.add_movie(movie)
+            imported_count += 1
 
         return imported_count
