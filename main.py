@@ -1,4 +1,4 @@
-from utils import check_datasets
+from modules.utils import check_datasets
 from modules.users import User
 from modules.movies import Movies
 from modules.watch_movies import Watch_Movie, user_history
