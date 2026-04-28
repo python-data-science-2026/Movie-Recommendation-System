@@ -5,8 +5,11 @@ PROJECT_ROOT = Path(__file__).parent.parent
 DATASET_LIST = {"users.csv":['username', 'lastname', 'firstname', 'date_of_birth', 'password'], 
                 "actors.csv":['id', 'full_name', 'date_of_birth'],
                 "genres.csv":['id', 'name'],
-                "movies.csv":['id', 'title', 'release_date', 'genre_id'],
-                "movies_actors.csv": ['movie_id', 'actor_id']}
+                "movies.csv":['id', 'title', 'release_date'],
+                "movies_genres.csv": ['movie_id', 'genre_id'],
+                "movies_actors.csv": ['movie_id', 'actor_id'],
+                "user_genre.csv": ['username', 'genre_id'],
+                "user_actors.csv": ['username', 'actor_id']}
 
 def check_datasets():
     for key, val in DATASET_LIST.items():
