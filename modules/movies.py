@@ -21,9 +21,6 @@ class Movies:
         self.release_date = release_date
 
     def save(self):
-        if not self.title:
-            return False
-        
         nrows = len(self.all_movies)
         get_movie = self.all_movies[self.all_movies['title'] == self.title]
 
