@@ -9,11 +9,31 @@ DATA_PATH = PROJECT_ROOT / "data" / "genres.csv"
 ##=============================================
 
 class Genre:
+    """
+    Manages movie genre data and interactions with the genre database.
+
+    Attributes:
+        all_genre (pd.DataFrame): The current collection of genres from the CSV database.
+        name (str): The name of the genre.
+    """
     def __init__(self, genre_name: str):
+        """
+        Initializes a Genre instance with the given name.
+
+        Args:
+            genre_name (str): The name of the genre.
+        """
         self.all_genre = pd.read_csv(DATA_PATH)
         self.name = genre_name.strip()
 
     def save(self):
+        """
+        Saves the genre to the CSV database if it does not already exist.
+
+        Returns:
+            bool: True if the genre was successfully saved, False if it 
+                  already exists or the name is empty.
+        """
         if not self.name:
             return False
 
@@ -32,5 +52,11 @@ class Genre:
             return False
 
     def get_id(self):
+        """
+        Retrieves the unique ID of the genre from the database.
+
+        Returns:
+            int: The genre's unique ID.
+        """
         get_genre = self.all_genre[self.all_genre['name'] == self.name]
         return int(get_genre['id'])

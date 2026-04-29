@@ -13,6 +13,13 @@ DATASET_LIST = {"users.csv":['username', 'lastname', 'firstname', 'date_of_birth
                 "watch_movies.csv": ['username', 'movie_id', 'watch_date', 'rating', 'comment']}
 
 def check_datasets():
+    """
+    Checks for the existence of required CSV datasets and creates them with headers if missing.
+
+    Iterates through the DATASET_LIST to ensure all necessary data files are present 
+    in the project's data directory. If a file is missing, it is created with the 
+    predefined columns.
+    """
     for key, val in DATASET_LIST.items():
         dataset_path = PROJECT_ROOT / "data" / key
         if not dataset_path.exists():

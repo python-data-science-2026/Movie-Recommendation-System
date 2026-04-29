@@ -13,7 +13,30 @@ ACTORS_PREF_DATA_PATH = PROJECT_ROOT / "data" / "user_actors.csv"
 ## User module : To manage users information 
 ##=============================================
 class User:
+    """
+    Manages user accounts, authentication, and preferences.
+
+    Attributes:
+        all_users (pd.DataFrame): User database indexed by username.
+        all_genre_preferencies (pd.DataFrame): User genre preferences.
+        all_actors_preferencies (pd.DataFrame): User actor preferences.
+        username (str): The unique username of the user.
+        lastname (str): The user's last name.
+        firstname (str, optional): The user's first name.
+        date_of_birth (str, optional): The user's date of birth.
+        password (str): The hashed password of the user.
+    """
     def __init__(self, username: str, password: str, lastname: str = '', firstname: str = None, date_of_birth: str = None):
+        """
+        Initializes a User instance.
+
+        Args:
+            username (str): Unique identifier for the user.
+            password (str): Plain-text password (will be hashed).
+            lastname (str, optional): User's last name. Defaults to ''.
+            firstname (str, optional): User's first name. Defaults to None.
+            date_of_birth (str, optional): User's date of birth. Defaults to None.
+        """
         self.all_users = pd.read_csv(DATA_PATH, index_col="username")
         self.all_genre_preferencies = pd.read_csv(GENRE_PREF_DATA_PATH)
         self.all_actors_preferencies = pd.read_csv(ACTORS_PREF_DATA_PATH)
@@ -25,14 +48,35 @@ class User:
         self.password = self._hash_password(password)
         
     def _hash_password(self, password: str) -> str:
+        """
+        Hashes a password using SHA-256.
+
+        Args:
+            password (str): The plain-text password.
+
+        Returns:
+            str: The hexadecimal representation of the hash.
+        """
         return hashlib.sha256(password.encode()).hexdigest()
 
     def login(self):
+        """
+        Authenticates the user by checking the username and password against the database.
+
+        Returns:
+            bool: True if authentication is successful, False otherwise.
+        """
         if self.username in self.all_users.index:
             return str(self.all_users.loc[self.username, 'password']) == self.password
         return False
     
     def save(self):
+        """
+        Saves the new user to the database if the username is unique.
+
+        Returns:
+            bool: True if the user was successfully saved, False if the username already exists.
+        """
         if self.username not in self.all_users.index: 
             current_user = pd.DataFrame(
                 [{
@@ -51,6 +95,18 @@ class User:
         return False
     
     def edit_data(self, lastname: str = '', password: str = '', firstname: str = None, date_of_birth: str = None):
+        """
+        Updates user information in the database.
+
+        Args:
+            lastname (str, optional): New last name.
+            password (str, optional): New plain-text password.
+            firstname (str, optional): New first name.
+            date_of_birth (str, optional): New date of birth.
+
+        Returns:
+            bool: True if the update was successful, False if the user does not exist.
+        """
         if self.username not in self.all_users.index:
             return False
 
@@ -67,6 +123,15 @@ class User:
         return True
 
     def add_genre_preferencies(self, genre:str):
+        """
+        Adds a genre to the user's preferences.
+
+        Args:
+            genre (str): The name of the genre to add.
+
+        Returns:
+            bool: True if the preference was successfully added, False if it already exists.
+        """
         genre_object = Genre(genre)
         _ = genre_object.save()
 
@@ -85,6 +150,15 @@ class User:
 
 
     def add_actors_preferencies(self, actor:str):
+        """
+        Adds an actor to the user's preferences.
+
+        Args:
+            actor (str): The full name of the actor to add.
+
+        Returns:
+            bool: True if the preference was successfully added, False if it already exists.
+        """
         actor_object = Actors(actor)
         _ = actor_object.save()
 
@@ -103,7 +177,19 @@ class User:
         return False
     
     def get_genre_preferencies(self):
+        """
+        Retrieves the user's genre preferences.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the user's preferred genre IDs.
+        """
         return  self.all_genre_preferencies[(self.all_genre_preferencies['username'] == self.username)]
 
     def get_actors_preferencies(self):
+        """
+        Retrieves the user's actor preferences.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the user's preferred actor IDs.
+        """
         return self.all_actors_preferencies[self.all_actors_preferencies['username'] == self.username]
