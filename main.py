@@ -1,3 +1,10 @@
+"""
+Main entry point for the Movie Recommendation System.
+
+This module handles the user interface and orchestration of registration,
+login, movie tracking, and preference management.
+"""
+
 from modules.utils import check_datasets
 from modules.users import User
 from modules.movies import Movies
@@ -5,6 +12,14 @@ from modules.watch_movies import Watch_Movie, user_history
 
 
 def register_flow():
+    """
+    Handles the user registration process.
+
+    Collects user details from input and attempts to save a new User.
+
+    Returns:
+        User: The created User object if successful, None otherwise.
+    """
     print("\n--- Register ---")
     username = input("Username: ").strip()
     password = input("Password: ").strip()
@@ -22,6 +37,14 @@ def register_flow():
 
 
 def login_flow():
+    """
+    Handles the user login process.
+
+    Collects credentials from input and attempts to authenticate the User.
+
+    Returns:
+        User: The authenticated User object if successful, None otherwise.
+    """
     print("\n--- Login ---")
     username = input("Username: ").strip()
     password = input("Password: ").strip()
@@ -36,6 +59,14 @@ def login_flow():
 
 
 def add_movie_flow(username):
+    """
+    Handles the process of adding a movie that the user has watched.
+
+    Collects movie details, rating, and watch date from input.
+
+    Args:
+        username (str): The username of the current user.
+    """
     print("\n--- Add Watched Movie ---")
     title = input("Movie title: ").strip()
     release_date = input("Release date (YYYY-MM-DD): ").strip()
@@ -69,6 +100,12 @@ def add_movie_flow(username):
 
 
 def add_preferences_flow(user):
+    """
+    Handles the process of setting user preferences for genres and actors.
+
+    Args:
+        user (User): The current authenticated User object.
+    """
     print("\n--- Set Preferences ---")
     genres = input("Favorite genres (comma separated): ").strip()
     actors = input("Favorite actors (comma separated): ").strip()
@@ -83,6 +120,12 @@ def add_preferences_flow(user):
 
 
 def show_history_flow(username):
+    """
+    Displays the history of movies watched by the user.
+
+    Args:
+        username (str): The username of the current user.
+    """
     print("\n--- Your Watched Movies ---")
     history = user_history(username)
     if history.empty:
@@ -92,6 +135,12 @@ def show_history_flow(username):
 
 
 def show_preferences_flow(user):
+    """
+    Displays the current user's favorite genres and actors.
+
+    Args:
+        user (User): The current authenticated User object.
+    """
     print("\n--- Your Preferences ---")
     print("Favourite genres:")
     print(user.get_genre_preferencies().to_string(index=False))
@@ -100,6 +149,11 @@ def show_preferences_flow(user):
 
 
 def main():
+    """
+    The main control loop for the application.
+
+    Initializes datasets and manages the top-level menu and user session.
+    """
     check_datasets()
     current_user = None
 
