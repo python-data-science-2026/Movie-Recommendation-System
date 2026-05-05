@@ -15,8 +15,8 @@ def merge_preferencies(user_df:pd.DataFrame, actor_df:pd.DataFrame, genre_df:pd.
     
     tmp2 = pd.merge(tmp1, pref_genre_df, 
                     on="username", 
-                    how="left").merge(genre_df.rename({"name":"genre_name"}), 
-                                      left_on="genre_id", right_on="id")
+                    how="left").merge(genre_df.rename({"name":"genre_name", 
+                                            "id":"genre_id"}), on="genre_id")
     
     return tmp2
 
@@ -36,6 +36,13 @@ def merge_movies_details(movies_df:pd.DataFrame, actor_df:pd.DataFrame,
     return tmp2 
 
 
-def build_user_movie_matrix(watch_movies_df:pd.DataFrame):
-    pass
+def watch_user_movie_mat(watch_movies_df:pd.DataFrame):
+    return pd.pivot(watch_movies_df, index="username", columns="movie_id",
+                    values="rating").fillna(0)
 
+def pref_user_mat(all_user_pref:pd.DataFrame, interest:str):
+    tmp = all_user_pref.copy()
+    tmp = tmp[['username', f"{interest}_id"]]
+    tmp["pref"] = tmp['username'].apply(lambda x: 1)
+    return pd.pivot(tmp, index="username", columns=f"{interest}_id",
+                    values="pref").fillna(0)
