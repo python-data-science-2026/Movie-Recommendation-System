@@ -25,3 +25,12 @@ def check_datasets():
         if not dataset_path.exists():
             dataset_path.parent.mkdir(parents=True, exist_ok=True)
             pd.DataFrame(columns=val).to_csv(dataset_path, index=False)
+
+
+def load_datasets():
+    datasets = dict()
+    for key in DATASET_LIST.keys():
+        dataset_path = PROJECT_ROOT / "data" / key
+        datasets[key] = pd.read_csv(dataset_path)
+    
+    return datasets
