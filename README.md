@@ -25,8 +25,8 @@ Follow the installation [link](http://github.com/pyenv/pyenv) to install pyenv i
 Then run the commands bellow :
 
 ```bash
-pyenv install 3.13
-pyenv local 3.13
+pyenv install 3.12
+pyenv local 3.12
 
 python --version
 ```
