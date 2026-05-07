@@ -122,7 +122,7 @@ class User:
         self.all_users.to_csv(DATA_PATH)
         return True
 
-    def add_genre_preferencies(self, genre:str):
+    def add_genre_preferencies(self, genre:str, rate=5):
         """
         Adds a genre to the user's preferences.
 
@@ -140,7 +140,8 @@ class User:
         if len(filtered_row) == 0:
             new_row = pd.DataFrame({
                 'username':self.username,
-                'genre_id' : genre_object.get_id()
+                'genre_id' : genre_object.get_id(),
+                'rating':rate
             })
 
             self.all_genre_preferencies = pd.concat([self.all_genre_preferencies, new_row])
@@ -149,7 +150,7 @@ class User:
         return False
 
 
-    def add_actors_preferencies(self, actor:str):
+    def add_actors_preferencies(self, actor:str, rate = 5):
         """
         Adds an actor to the user's preferences.
 
@@ -168,7 +169,8 @@ class User:
         if len(filtered_row) == 0:
             new_row = pd.DataFrame({
                 'username':self.username,
-                'actor_id' : actor_object.get_id()
+                'actor_id' : actor_object.get_id(),
+                'rating':rate
             })
 
             self.all_actors_preferencies = pd.concat([self.all_actors_preferencies, new_row])
