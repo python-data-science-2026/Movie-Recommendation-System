@@ -10,12 +10,13 @@ authors = [
 ]
 license = "MIT"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.11"
 dependencies = [
-    "numpy (>=2.4.4,<3.0.0)",
-    "pandas (>=3.0.2,<4.0.0)",
     "pathlib (>=1.0.1,<2.0.0)",
-    "streamlit (>=1.57.0,<2.0.0)"
+    "streamlit (>=1.57.0,<2.0.0)",
+    "numpy (<2.0.0)",
+    "pandas (<2.2.0)",
+    "scikit-surprise (>=1.1.4,<2.0.0)",
 ]
 
 [tool.poetry]

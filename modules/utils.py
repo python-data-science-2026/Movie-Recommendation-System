@@ -27,10 +27,9 @@ def check_datasets():
             pd.DataFrame(columns=val).to_csv(dataset_path, index=False)
 
 
-def load_datasets():
-    datasets = dict()
-    for key in DATASET_LIST.keys():
-        dataset_path = PROJECT_ROOT / "data" / key
-        datasets[key] = pd.read_csv(dataset_path)
+def load_datasets(filename:str):
     
-    return datasets
+    dataset_path = PROJECT_ROOT / "data" / filename
+    dataset = pd.read_csv(dataset_path)
+    
+    return dataset

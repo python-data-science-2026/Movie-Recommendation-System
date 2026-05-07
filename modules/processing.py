@@ -1,6 +1,5 @@
 from modules import utils
 
-import numpy as np 
 import pandas as pd
 
 
@@ -43,8 +42,10 @@ def watch_user_genres_mat(watch_movies_df:pd.DataFrame, movies_genres_df:pd.Data
     tmp = pd.merge(watch_movies_df, movies_genres_df, 
                    on="movie_id", how='left').drop(['comment', 'watch_date', 'movie_id'], axis=1)
 
-    return tmp.pivot_table(index="username", columns="genre_id",
-                    values="rating").fillna(0)
+    return tmp.groupby(['username', 'genre_id']).agg('mean').fillna(0).reset_index()
+
+def watch_user_movies_mat(watch_movies_df:pd.DataFrame):
+    return watch_movies_df[['username', 'movie_id', 'rating']]
 
 def pref_user_mat(all_user_pref:pd.DataFrame, interest:str):
     tmp = all_user_pref.copy()
