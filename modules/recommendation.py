@@ -18,5 +18,9 @@ def build_SVD_recommender(rating_data:pd.DataFrame):
     svd_model.fit(train_set)
     return svd_model
 
-def predict_recommendation(svd_model:SVD, username:str, item_id:int):
+def predict_recommendation(svd_model:SVD, username:str, item_id:int|str):
     return svd_model.predict(uid=username, iid=item_id).est
+
+def top_recommendation(items_list:list, pred_list:list, top:int=10):
+    sorted_idx = sorted(range(len(pred_list)), key=lambda k: pred_list[k])
+    return items_list[sorted_idx[:top]]

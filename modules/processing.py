@@ -1,19 +1,20 @@
-from modules import utils
-
 import pandas as pd
+import numpy as np
 
 
 def merge_preferencies(actor_df:pd.DataFrame, genre_df:pd.DataFrame, 
                        pref_actor_df:pd.DataFrame, pref_genre_df:pd.DataFrame) -> pd.DataFrame:
     tmp1 = pd.merge(pref_actor_df, actor_df.rename({"full_name":"actor_full_name",
                                                        "date_of_birth":"actor_date_of_birth",
-                                                       "id":"actor_id"}, axis=1), 
-                                      on="actor_id").drop(labels=['actor_id'], axis=1)
+                                                       "id":"actor_id",
+                                                       'rating':'actor_rating'}, axis=1), 
+                                      on="actor_id")
     
     tmp2 = pd.merge(tmp1, pref_genre_df, 
                     on="username", 
                     how="left").merge(genre_df.rename({"name":"genre_name", 
-                                            "id":"genre_id"}, axis=1), on="genre_id").drop(labels=['genre_id'], axis=1)
+                                            "id":"genre_id", "rating":"genre_rating"}, 
+                                            axis=1), on="genre_id")
     
     return tmp2
 
@@ -48,8 +49,14 @@ def watch_user_movies_mat(watch_movies_df:pd.DataFrame):
     return watch_movies_df[['username', 'movie_id', 'rating']]
 
 def pref_user_mat(all_user_pref:pd.DataFrame, interest:str):
-    tmp = all_user_pref.copy()
-    tmp = tmp[['username', f"{interest}_id"]]
-    tmp["pref"] = tmp['username'].apply(lambda x: 1)
-    return pd.pivot(tmp, index="username", columns=f"{interest}_id",
-                    values="pref").fillna(0)
+    return all_user_pref[['username', f"{interest}_id", f"{interest}_rating"]]
+
+def movies_not_yet_watched(username:str, movies_df:pd.DataFrame, watch_movies_df:pd.DataFrame):
+    user_watched = watch_movies_df.loc[watch_movies_df['username']==username]
+    not_watced_mask = ~np.isin(movies_df['id'], user_watched['movie_id'])
+    return movies_df.loc[not_watced_mask]
+
+def genre_not_yet_watched(movies_not_watched:pd.DataFrame, detail_genre_df:pd.DataFrame):
+    tmp = pd.merge(movies_not_watched.rename({"id":"movie_id"}, axis=1), 
+                   detail_genre_df, how='left', on='movie_id')
+    return tmp[['movie_id', 'genre_id']]
