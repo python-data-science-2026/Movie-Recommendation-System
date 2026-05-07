@@ -1,5 +1,3 @@
-from .users import User
-from .movies import Movies
 import pandas as pd
 from pathlib import Path
 
