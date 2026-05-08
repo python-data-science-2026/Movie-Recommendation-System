@@ -88,6 +88,7 @@ def show_genre_breakdown(username):
     plt.tight_layout()
 
     plt.show(block=True)
+    plt.savefig(DATA_DIR / f"{username}_genre_plot.png")
 
 def show_actor_breakdown(username):
     movies = pd.read_csv(DATA_DIR / "movies.csv")
@@ -118,6 +119,20 @@ def show_actor_breakdown(username):
     print("\n=== Movies by Actor ===")
     for actor, count in actor_counts.items():
         print(f"{actor:25} {'█' * count}")
+
+    plt.figure(figsize=(10, 5))
+
+    actor_counts.plot(kind="bar")
+
+    plt.title(f"Movies by Actor - {username}")
+    plt.xlabel("Actor")
+    plt.ylabel("Count")
+
+    plt.xticks(rotation=45, ha="right")
+    plt.tight_layout()
+
+    plt.show(block=True)
+    plt.savefig(DATA_DIR / f"{username}_actor_plot.png")
 
 
 def show_rating_trend(username):
