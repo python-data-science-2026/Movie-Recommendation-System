@@ -3,6 +3,7 @@
 ##=============================================
 from pathlib import Path
 import pandas as pd
+import matplotlib.pyplot as plt
 
 PROJECT_ROOT = Path(__file__).parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
@@ -37,6 +38,7 @@ def show_user_analysis(username):
     print(user_movies[["title", "release_date", "watch_date", "rating", "comment"]].to_string(index=False))
     show_genre_breakdown(username)
     show_actor_breakdown(username)
+    show_rating_trend(username)
 
 def show_genre_breakdown(username):
     from pathlib import Path
@@ -75,6 +77,18 @@ def show_genre_breakdown(username):
     for genre, count in genre_counts.items():
         print(f"{genre:10} {'█' * count}")
 
+    plt.figure(figsize=(8, 5))
+    genre_counts.plot(kind="bar")
+
+    plt.title(f"Movies by Genre - {username}")
+    plt.xlabel("Genre")
+    plt.ylabel("Count")
+
+    plt.xticks(rotation=45, ha="right")
+    plt.tight_layout()
+
+    plt.show(block=True)
+
 def show_actor_breakdown(username):
     movies = pd.read_csv(DATA_DIR / "movies.csv")
     watch_movies = pd.read_csv(DATA_DIR / "watch_movies.csv")
@@ -104,3 +118,27 @@ def show_actor_breakdown(username):
     print("\n=== Movies by Actor ===")
     for actor, count in actor_counts.items():
         print(f"{actor:25} {'█' * count}")
+
+
+def show_rating_trend(username):
+    watch_movies = pd.read_csv(DATA_DIR / "watch_movies.csv")
+
+    user_watches = watch_movies[watch_movies["username"] == username].copy()
+
+    if user_watches.empty:
+        return
+
+    # Datum konvertieren
+    user_watches["watch_date"] = pd.to_datetime(
+        user_watches["watch_date"], errors="coerce"
+    )
+
+    # Sortieren nach Datum
+    user_watches = user_watches.sort_values("watch_date")
+
+    print("\n=== Rating Trend ===")
+
+    for _, row in user_watches.iterrows():
+        date = row["watch_date"].date()
+        rating = row["rating"]
+        print(f"{date} → {rating}")
