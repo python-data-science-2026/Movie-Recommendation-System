@@ -36,6 +36,7 @@ def show_user_analysis(username):
     print("\n=== Your watched movies ===")
     print(user_movies[["title", "release_date", "watch_date", "rating", "comment"]].to_string(index=False))
     show_genre_breakdown(username)
+    show_actor_breakdown(username)
 
 def show_genre_breakdown(username):
     from pathlib import Path
@@ -73,3 +74,33 @@ def show_genre_breakdown(username):
     print("\n=== Movies by Genre ===")
     for genre, count in genre_counts.items():
         print(f"{genre:10} {'█' * count}")
+
+def show_actor_breakdown(username):
+    movies = pd.read_csv(DATA_DIR / "movies.csv")
+    watch_movies = pd.read_csv(DATA_DIR / "watch_movies.csv")
+    movies_actors = pd.read_csv(DATA_DIR / "movies_actors.csv")
+    actors = pd.read_csv(DATA_DIR / "actors.csv")
+
+    user_watches = watch_movies[watch_movies["username"] == username]
+
+    if user_watches.empty:
+        return
+
+    user_movies = user_watches.merge(
+        movies,
+        left_on="movie_id",
+        right_on="id",
+        how="left"
+    )
+
+    actor_data = (
+        user_movies[["movie_id", "title"]]
+        .merge(movies_actors, on="movie_id")
+        .merge(actors, left_on="actor_id", right_on="id")
+    )
+
+    actor_counts = actor_data["full_name"].value_counts()
+
+    print("\n=== Movies by Actor ===")
+    for actor, count in actor_counts.items():
+        print(f"{actor:25} {'█' * count}")
