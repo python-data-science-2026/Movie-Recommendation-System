@@ -9,7 +9,7 @@ from modules.utils import check_datasets
 from modules.users import User
 from modules.movies import Movies
 from modules.watch_movies import Watch_Movie, user_history
-
+from modules.visualization import show_user_analysis
 
 def register_flow():
     """
@@ -181,6 +181,7 @@ def main():
         print("2. Set preferences")
         print("3. Show watched movies")
         print("4. Show preferences")
+        print("5. Visualization")
         print("0. Logout")
 
         choice = input("Choose an option: ").strip()
@@ -193,6 +194,8 @@ def main():
             show_history_flow(current_user.username)
         elif choice == "4":
             show_preferences_flow(current_user)
+        elif choice == "5":
+            show_user_analysis(current_user.username)
         elif choice == "0":
             print("Logged out.")
             break
