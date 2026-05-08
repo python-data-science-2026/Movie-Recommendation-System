@@ -5,10 +5,12 @@ This module handles the user interface and orchestration of registration,
 login, movie tracking, and preference management.
 """
 
-from modules.utils import check_datasets
+from modules.utils import check_datasets, check_rating, validate_date, load_datasets
 from modules.users import User
 from modules.movies import Movies
 from modules.watch_movies import Watch_Movie, user_history
+from modules.recommendation import build_SVD_recommender, predict_recommendation, top_recommendation
+from modules.processing import movies_not_yet_watched, merge_genre_preferencies, merge_actor_preferencies, pref_user_mat
 
 
 def register_flow():
@@ -25,7 +27,12 @@ def register_flow():
     password = input("Password: ").strip()
     lastname = input("Last name: ").strip()
     firstname = input("First name: ").strip()
-    date_of_birth = input("Date of birth (YYYY-MM-DD): ").strip()
+
+    while True:
+        date_of_birth = input("Date of birth (YYYY-MM-DD): ").strip()
+        if validate_date(date_of_birth):
+            break
+        print("Invalid date format. Please use YYYY-MM-DD.")
 
     user = User(username, password, lastname, firstname, date_of_birth)
     if user.save():
@@ -69,29 +76,40 @@ def add_movie_flow(username):
     """
     print("\n--- Add Watched Movie ---")
     title = input("Movie title: ").strip()
-    release_date = input("Release date (YYYY-MM-DD): ").strip()
-    genre = input("Genre: ").strip()
-    actor = input("Actor: ").strip()
-    watch_date = input("Watch date (YYYY-MM-DD): ").strip()
+    
+    while True:
+        release_date = input("Release date (YYYY-MM-DD): ").strip()
+        if validate_date(release_date):
+            break
+        print("Invalid date format. Please use YYYY-MM-DD.")
+        
+    genres = input("Genres (comma separated): ").strip()
+    actors = input("Actors (comma separated): ").strip()
+    
+    while True:
+        watch_date = input("Watch date (YYYY-MM-DD): ").strip()
+        if validate_date(watch_date):
+            break
+        print("Invalid date format. Please use YYYY-MM-DD.")
 
-    try:
-        rating = float(input("Rating (1 to 5): ").strip())
-        if rating < 1 or rating > 5:
-            print("Rating must be between 1 and 5.")
-            return
-    except ValueError:
-        print("Invalid rating.")
-        return
+    while True:
+        rating_input = input("Rating (1 to 5): ").strip()
+        rating = check_rating(rating_input)
+        if rating is not None:
+            break
+        print("Rating must be a number between 1 and 5.")
 
     comment = input("Comment (optional): ").strip()
 
     movie = Movies(title, release_date)
     movie.save()
 
-    if genre:
-        movie.add_genre(genre)
-    if actor:
-        movie.add_actor(actor)
+    if genres:
+        for genre in genres.split(","):
+            movie.add_genre(genre)
+    if actors:
+        for actor in actors.split(","):
+            movie.add_actor(actor)
 
     watch = Watch_Movie(username, movie.get_id(), watch_date, rating, comment)
     watch.save()
@@ -108,16 +126,24 @@ def add_preferences_flow(user):
     """
     print("\n--- Set Preferences ---")
     genres = input("Favorite genres (comma separated): ").strip()
+    genres_rating = input("Rate each genre between 1 and 5 (comma separated): ").strip()
     actors = input("Favorite actors (comma separated): ").strip()
+    actors_rating = input("Rate each actor between 1 and 5 (comma separated): ").strip()
+    if actors:
+        actors_list = [a.strip() for a in actors.split(",") if a.strip()]
+        actors_rating_list = [check_rating(r.strip()) for r in actors_rating.split(",")]
+        for i, actor in enumerate(actors_list):
+            rate = actors_rating_list[i] if i < len(actors_rating_list) and actors_rating_list[i] is not None else 5
+            user.add_actors_preferencies(actor, rate)
 
-    for genre in [g.strip() for g in genres.split(",") if g.strip()]:
-        user.add_genre_preferencies(genre)
-
-    for actor in [a.strip() for a in actors.split(",") if a.strip()]:
-        user.add_actors_preferencies(actor)
+    if genres:
+        genres_list = [g.strip() for g in genres.split(",") if g.strip()]
+        genres_rating_list = [check_rating(r.strip()) for r in genres_rating.split(",")]
+        for i, genre in enumerate(genres_list):
+            rate = genres_rating_list[i] if i < len(genres_rating_list) and genres_rating_list[i] is not None else 5
+            user.add_genre_preferencies(genre, rate)
 
     print("Preferences saved successfully.")
-
 
 def show_history_flow(username):
     """
@@ -141,11 +167,57 @@ def show_preferences_flow(user):
     Args:
         user (User): The current authenticated User object.
     """
+    actors_df = load_datasets("actors.csv")
+    genres_df = load_datasets("genres.csv")
+
+    actors_user_pref = merge_actor_preferencies(actors_df, user.get_actors_preferencies())
+    genres_user_pref = merge_genre_preferencies(genres_df, user.get_genre_preferencies())
     print("\n--- Your Preferences ---")
     print("Favourite genres:")
-    print(user.get_genre_preferencies().to_string(index=False))
+    print(genres_user_pref[['genre_name', 'genre_rating']].to_string(index=False))
+
     print("\nFavourite actors:")
-    print(user.get_actors_preferencies().to_string(index=False))
+    print(actors_user_pref[['actor_full_name','actor_rating', 'actor_date_of_birth']].to_string(index=False))
+
+
+def get_recommendations_flow(username):
+    """
+    Generates and displays movie recommendations for the user.
+
+    Args:
+        username (str): The username of the current user.
+    """
+    print("\n--- Movie Recommendations ---")
+    
+    # Load data
+    movies_df = load_datasets("movies.csv")
+    watch_movies_df = load_datasets("watch_movies.csv")
+    
+    if watch_movies_df.empty:
+        print("Not enough data to provide recommendations. Please watch and rate some movies first!")
+        return
+
+    # Find movies not yet watched
+    unwatched_movies = movies_not_yet_watched(username, movies_df, watch_movies_df)
+    
+    if unwatched_movies.empty:
+        print("You've watched everything in our database! Stay tuned for more.")
+        return
+
+    # Train model
+    rating_data = watch_movies_df[['username', 'movie_id', 'rating']]
+    model = build_SVD_recommender(rating_data)
+    
+    # Predict ratings
+    movie_ids = unwatched_movies['id'].tolist()
+    predictions = [predict_recommendation(model, username, mid) for mid in movie_ids]
+    
+    # Get top 5 recommendations
+    top_ids = top_recommendation(movie_ids, predictions, top=5)
+    
+    print("Based on your history, you might like:")
+    recommendations = unwatched_movies[unwatched_movies['id'].isin(top_ids)]
+    print(recommendations[['title', 'release_date']].to_string(index=False))
 
 
 def main():
@@ -181,6 +253,7 @@ def main():
         print("2. Set preferences")
         print("3. Show watched movies")
         print("4. Show preferences")
+        print("5. Get recommendations")
         print("0. Logout")
 
         choice = input("Choose an option: ").strip()
@@ -193,6 +266,8 @@ def main():
             show_history_flow(current_user.username)
         elif choice == "4":
             show_preferences_flow(current_user)
+        elif choice == "5":
+            get_recommendations_flow(current_user.username)
         elif choice == "0":
             print("Logged out.")
             break
