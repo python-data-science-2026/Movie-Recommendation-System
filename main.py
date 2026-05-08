@@ -73,15 +73,14 @@ def add_movie_flow(username):
     genre = input("Genre: ").strip()
     actor = input("Actor: ").strip()
     watch_date = input("Watch date (YYYY-MM-DD): ").strip()
-
-    try:
-        rating = float(input("Rating (1 to 5): ").strip())
-        if rating < 1 or rating > 5:
-            print("Rating must be between 1 and 5.")
-            return
-    except ValueError:
-        print("Invalid rating.")
-        return
+    while True:
+        rating = input("Rating (1 to 5): ").strip()
+        if rating.isdigit():
+            rating = float(rating)
+            if rating >= 1 and rating <= 5:
+                break
+            else:
+                print("Rating must be between 1 and 5.")
 
     comment = input("Comment (optional): ").strip()
 
@@ -106,15 +105,28 @@ def add_preferences_flow(user):
     Args:
         user (User): The current authenticated User object.
     """
+    def check_rating(rating:str):
+        if rating.isdigit():
+            return float(rating)
+        else: 
+            return None
+
     print("\n--- Set Preferences ---")
     genres = input("Favorite genres (comma separated): ").strip()
+    genres_rating = input("Rate each genres between 1 and 5 (comma separated): ").strip()
     actors = input("Favorite actors (comma separated): ").strip()
+    actors_rating = input("Rate each genres between 1 and 5 (comma separated): ").strip()
 
-    for genre in [g.strip() for g in genres.split(",") if g.strip()]:
-        user.add_genre_preferencies(genre)
+    genres_list = [g.strip() for g in genres.split(",") if g.strip()]
+    actors_list = [a.strip() for a in actors.split(",") if a.strip()]
+    genres_rating_list = [check_rating(r) for r in genres_rating.split(",")]
+    actors_rating_list = [check_rating(r) for r in actors_rating.split(",")]
 
-    for actor in [a.strip() for a in actors.split(",") if a.strip()]:
-        user.add_actors_preferencies(actor)
+    for genre, genre_rate in zip(genres_list, genres_rating_list):
+        user.add_genre_preferencies(genre, genre_rate)
+
+    for actor, actor_rate in zip(actors_list, actors_rating_list):
+        user.add_actors_preferencies(actor, actor_rate)
 
     print("Preferences saved successfully.")
 
