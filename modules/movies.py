@@ -1,3 +1,10 @@
+"""
+Movie management module.
+
+This module provides the Movies class for handling movie information,
+associations with actors and genres, and database interactions.
+"""
+
 from pathlib import Path
 import pandas as pd 
 from .genres import Genre
@@ -22,7 +29,7 @@ class Movies:
         title (str): The title of the movie.
         release_date (str, optional): The release date of the movie.
     """
-    def __init__(self, title: str, release_date:str=None, ):
+    def __init__(self, title: str, release_date:str=None):
         """
         Initializes a Movies instance with the given title and optional release date.
 
@@ -67,8 +74,8 @@ class Movies:
         Returns:
             int: The movie's unique ID.
         """
-        get_movie = self.all_movies[self.all_movies['title'] == self.title]
-        return int(get_movie['id'])
+        get_movie = self.all_movies.loc[self.all_movies['title'] == self.title]
+        return int(get_movie['id'].item())
 
     def add_actor(self, actor:str):
         """
@@ -87,13 +94,14 @@ class Movies:
                                                     (self.all_movies_actors['actor_id'] == actor_object.get_id())]
 
         if len(filtered_row) == 0:
-            new_row = pd.DataFrame({
+            new_row = pd.DataFrame([{
                 'movie_id':self.get_id(),
                 'actor_id' : actor_object.get_id()
-            })
+            }])
 
             self.all_movies_actors = pd.concat([self.all_movies_actors, new_row])
-            self.all_movies_actors.to_csv(MOVIES_ACTORS_DATA_PATH)
+            self.all_movies_actors['actor_id'] = self.all_movies_actors['actor_id'].astype('Int64')
+            self.all_movies_actors.to_csv(MOVIES_ACTORS_DATA_PATH, index=False)
             return True
         return False
 
@@ -113,12 +121,13 @@ class Movies:
         filtered_row = self.all_movies_genres[(self.all_movies_genres['movie_id'] == self.get_id())&
                                                     (self.all_movies_genres['genre_id'] == genre_object.get_id())]
         if len(filtered_row) == 0:
-            new_row = pd.DataFrame({
+            new_row = pd.DataFrame([{
                 'movie_id': self.get_id(),
                 'genre_id' : genre_object.get_id()
-            })
+            }])
 
             self.all_movies_genres = pd.concat([self.all_movies_genres, new_row])
-            self.all_movies_genres.to_csv(MOVIES_GENRES_DATA_PATH)
+            self.all_movies_genres['genre_id'] = self.all_movies_genres['genre_id'].astype('Int64')
+            self.all_movies_genres.to_csv(MOVIES_GENRES_DATA_PATH, index=False)
             return True
         return False

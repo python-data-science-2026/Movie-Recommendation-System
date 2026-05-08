@@ -1,3 +1,10 @@
+"""
+User management module.
+
+This module provides the User class for handling user accounts, authentication,
+and managing user-specific preferences for genres and actors.
+"""
+
 from pathlib import Path
 import pandas as pd 
 import hashlib
@@ -138,11 +145,11 @@ class User:
         filtered_row = self.all_genre_preferencies[(self.all_genre_preferencies['username'] == self.username)&
                                                     (self.all_genre_preferencies['genre_id'] == genre_object.get_id())]
         if len(filtered_row) == 0:
-            new_row = pd.DataFrame({
+            new_row = pd.DataFrame([{
                 'username':self.username,
                 'genre_id' : genre_object.get_id(),
                 'rating':rate
-            })
+            }])
 
             self.all_genre_preferencies = pd.concat([self.all_genre_preferencies, new_row])
             self.all_genre_preferencies.to_csv(GENRE_PREF_DATA_PATH)
@@ -167,11 +174,11 @@ class User:
                                                     (self.all_actors_preferencies['actor_id'] == actor_object.get_id())]
 
         if len(filtered_row) == 0:
-            new_row = pd.DataFrame({
+            new_row = pd.DataFrame([{
                 'username':self.username,
                 'actor_id' : actor_object.get_id(),
                 'rating':rate
-            })
+            }])
 
             self.all_actors_preferencies = pd.concat([self.all_actors_preferencies, new_row])
             self.all_actors_preferencies.to_csv(ACTORS_PREF_DATA_PATH)

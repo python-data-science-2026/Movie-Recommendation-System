@@ -1,3 +1,10 @@
+"""
+Genre management module.
+
+This module provides the Genre class for handling movie genre information,
+including saving to and retrieving from the genres database.
+"""
+
 from pathlib import Path
 import pandas as pd 
 
@@ -58,5 +65,5 @@ class Genre:
         Returns:
             int: The genre's unique ID.
         """
-        get_genre = self.all_genre[self.all_genre['name'] == self.name]
-        return int(get_genre['id'])
+        get_genre = self.all_genre.loc[self.all_genre['name'] == self.name]
+        return int(get_genre['id'].item())

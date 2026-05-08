@@ -1,8 +1,16 @@
+"""
+Movie watch history management module.
+
+This module provides the Watch_Movie class and utility functions for tracking
+and retrieving movie watch events for users.
+"""
+
 import pandas as pd
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent
 DATA_PATH = PROJECT_ROOT / "data" / "watch_movies.csv"
+DATA_MOVIES_PATH = PROJECT_ROOT / "data" / "movies.csv"
 
 class Watch_Movie:
     """
@@ -38,16 +46,16 @@ class Watch_Movie:
         """
         Saves the watch event to the tracking database.
         """
-        new_row = pd.DataFrame({
+        new_row = pd.DataFrame([{
             'username' : self.username,
             'movie_id' : self.movie_id,
             'watch_date' : self.watch_date,
             'rating' : self.rating,
             'comment' : self.comment
-        })
+        }])
 
         self.all_data = pd.concat([self.all_data, new_row])
-        self.all_data.to_csv(DATA_PATH)
+        self.all_data.to_csv(DATA_PATH, index=False)
 
 def user_history(username:str):
     """
@@ -59,8 +67,11 @@ def user_history(username:str):
     Returns:
         pd.DataFrame: A DataFrame containing all watch events for the user.
     """
-    all_data = pd.read_csv(DATA_PATH)
-    return all_data[all_data['username'] == username]
+    history = pd.read_csv(DATA_PATH)
+    movies_df = pd.read_csv(DATA_MOVIES_PATH)
+    all_data = pd.merge(history, movies_df.rename({'id':'movie_id'}, axis=1), on="movie_id")
+    all_data = all_data[all_data['username'] == username]
+    return all_data[['watch_date', 'rating', 'title', 'release_date']]
 
 def get_all_watching():
     """

@@ -1,3 +1,10 @@
+"""
+Actor management module.
+
+This module provides the Actors class for handling actor information,
+including saving to and retrieving from the actors database.
+"""
+
 from pathlib import Path
 import pandas as pd 
 
@@ -63,5 +70,5 @@ class Actors:
         Returns:
             int: The actor's unique ID.
         """
-        get_actor = self.all_actors[self.all_actors['full_name'] == self.fullname]
-        return int(get_actor['id'])
+        get_actor = self.all_actors.loc[self.all_actors['full_name'] == self.fullname]
+        return int(get_actor['id'].item())
