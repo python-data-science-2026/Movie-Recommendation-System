@@ -68,7 +68,8 @@ class Movies:
             int: The movie's unique ID.
         """
         get_movie = self.all_movies[self.all_movies['title'] == self.title]
-        return int(get_movie['id'])
+        
+        return int(get_movie['id'].iloc[0])
 
     def add_actor(self, actor:str):
         """
@@ -87,10 +88,10 @@ class Movies:
                                                     (self.all_movies_actors['actor_id'] == actor_object.get_id())]
 
         if len(filtered_row) == 0:
-            new_row = pd.DataFrame({
-                'movie_id':self.get_id(),
-                'actor_id' : actor_object.get_id()
-            })
+            new_row = pd.DataFrame([{
+                'movie_id': self.get_id(),
+                'actor_id': actor_object.get_id()
+            }])
 
             self.all_movies_actors = pd.concat([self.all_movies_actors, new_row])
             self.all_movies_actors.to_csv(MOVIES_ACTORS_DATA_PATH)
@@ -113,10 +114,10 @@ class Movies:
         filtered_row = self.all_movies_genres[(self.all_movies_genres['movie_id'] == self.get_id())&
                                                     (self.all_movies_genres['genre_id'] == genre_object.get_id())]
         if len(filtered_row) == 0:
-            new_row = pd.DataFrame({
-                'movie_id': self.get_id(),
-                'genre_id' : genre_object.get_id()
-            })
+            new_row = pd.DataFrame([{
+            'movie_id': self.get_id(),
+            'genre_id': genre_object.get_id()
+            }])
 
             self.all_movies_genres = pd.concat([self.all_movies_genres, new_row])
             self.all_movies_genres.to_csv(MOVIES_GENRES_DATA_PATH)

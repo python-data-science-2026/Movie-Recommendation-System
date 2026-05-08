@@ -59,4 +59,4 @@ class Genre:
             int: The genre's unique ID.
         """
         get_genre = self.all_genre[self.all_genre['name'] == self.name]
-        return int(get_genre['id'])
+        return int(get_genre["id"].iloc[0])

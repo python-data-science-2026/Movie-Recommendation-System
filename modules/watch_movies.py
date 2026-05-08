@@ -38,13 +38,13 @@ class Watch_Movie:
         """
         Saves the watch event to the tracking database.
         """
-        new_row = pd.DataFrame({
+        new_row = pd.DataFrame([{
             'username' : self.username,
             'movie_id' : self.movie_id,
             'watch_date' : self.watch_date,
             'rating' : self.rating,
             'comment' : self.comment
-        })
+        }])
 
         self.all_data = pd.concat([self.all_data, new_row])
         self.all_data.to_csv(DATA_PATH)

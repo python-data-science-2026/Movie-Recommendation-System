@@ -64,4 +64,4 @@ class Actors:
             int: The actor's unique ID.
         """
         get_actor = self.all_actors[self.all_actors['full_name'] == self.fullname]
-        return int(get_actor['id'])
+        return int(get_actor["id"].iloc[0])
