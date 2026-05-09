@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 import matplotlib.pyplot as plt
 
-
+#Set pathes
 PROJECT_ROOT = Path(__file__).parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 
@@ -18,7 +18,7 @@ def load_movies():
     watch_movies = pd.read_csv(WATCH_MOVIES_PATH)
     return movies, watch_movies
 
-
+#Fct which returns the userdata
 def show_user_analysis(username):
     movies, watch_movies = load_movies()
 
@@ -41,6 +41,7 @@ def show_user_analysis(username):
     show_actor_breakdown(username)
     show_rating_trend(username)
 
+#Fct which shows the genre breakdown and plots it
 def show_genre_breakdown(username):
     from pathlib import Path
     import pandas as pd
@@ -91,6 +92,7 @@ def show_genre_breakdown(username):
     plt.show(block=True)
     plt.savefig(DATA_DIR / f"{username}_genre_plot.png")
 
+#Fct showing the favorite actors and visualizing it
 def show_actor_breakdown(username):
     movies = pd.read_csv(DATA_DIR / "movies.csv")
     watch_movies = pd.read_csv(DATA_DIR / "watch_movies.csv")
@@ -135,7 +137,7 @@ def show_actor_breakdown(username):
     plt.show(block=True)
     plt.savefig(DATA_DIR / f"{username}_actor_plot.png")
 
-
+#Fct which shows the rating of movies over time
 def show_rating_trend(username):
     watch_movies = pd.read_csv(DATA_DIR / "watch_movies.csv")
 
