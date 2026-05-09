@@ -5,6 +5,7 @@ from pathlib import Path
 import pandas as pd
 import matplotlib.pyplot as plt
 
+
 PROJECT_ROOT = Path(__file__).parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 
@@ -143,12 +144,11 @@ def show_rating_trend(username):
     if user_watches.empty:
         return
 
-    # Datum konvertieren
     user_watches["watch_date"] = pd.to_datetime(
         user_watches["watch_date"], errors="coerce"
     )
 
-    # Sortieren nach Datum
+    user_watches = user_watches.dropna(subset=["watch_date"])
     user_watches = user_watches.sort_values("watch_date")
 
     print("\n=== Rating Trend ===")
@@ -157,3 +157,21 @@ def show_rating_trend(username):
         date = row["watch_date"].date()
         rating = row["rating"]
         print(f"{date} → {rating}")
+
+    plt.figure(figsize=(8, 5))
+
+    plt.plot(
+        user_watches["watch_date"],
+        user_watches["rating"],
+        marker="o"
+    )
+
+    plt.title(f"Rating Trend Over Time - {username}")
+    plt.xlabel("Watch Date")
+    plt.ylabel("Rating")
+    plt.ylim(0, 5)
+
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+
+    plt.show()
