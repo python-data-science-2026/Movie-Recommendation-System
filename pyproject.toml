@@ -18,6 +18,7 @@ dependencies = [
     "pandas (<2.2.0)",
     "scikit-surprise (>=1.1.4,<2.0.0)",
     "matplotlib (>=3.10.9,<4.0.0)",
+    "surprise (>=0.1,<0.2)",
 ]
 
 [tool.poetry]

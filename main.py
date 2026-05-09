@@ -10,6 +10,9 @@ from modules.users import User
 from modules.movies import Movies
 from modules.watch_movies import Watch_Movie, user_history
 from modules.visualization import show_user_analysis
+from modules.recommendation import recommend_movies
+from pathlib import Path
+import pandas as pd
 
 def register_flow():
     """
@@ -147,6 +150,33 @@ def show_preferences_flow(user):
     print("\nFavourite actors:")
     print(user.get_actors_preferencies().to_string(index=False))
 
+def show_recommendations_flow(username):
+    """
+    Displays movie recommendations for the current user.
+    """
+    print("\n--- Movie Recommendations ---")
+
+    try:
+        recommended_ids = recommend_movies(username)
+    except Exception as error:
+        print("Could not generate recommendations.")
+        print(f"Reason: {error}")
+        return
+
+    if not recommended_ids:
+        print("No recommendations found yet.")
+        return
+
+    data_dir = Path(__file__).parent / "data"
+    movies = pd.read_csv(data_dir / "movies.csv")
+
+    recommended_movies = movies[movies["id"].isin(recommended_ids)]
+
+    if recommended_movies.empty:
+        print("No matching movies found in the movie database.")
+        return
+
+    print(recommended_movies[["title", "release_date"]].to_string(index=False))
 
 def main():
     """
@@ -181,7 +211,8 @@ def main():
         print("2. Set preferences")
         print("3. Show watched movies")
         print("4. Show preferences")
-        print("5. Visualization")
+        print("5. Recommendations")
+        print("6. Visualization")
         print("0. Logout")
 
         choice = input("Choose an option: ").strip()
@@ -195,6 +226,8 @@ def main():
         elif choice == "4":
             show_preferences_flow(current_user)
         elif choice == "5":
+            show_recommendations_flow(current_user.username)
+        elif choice == "6":
             show_user_analysis(current_user.username)
         elif choice == "0":
             print("Logged out.")

@@ -2423,6 +2423,20 @@ snowflake = ["snowflake-connector-python (>=3.3.0)", "snowflake-snowpark-python[
 sql = ["SQLAlchemy (>=2.0.0)"]
 
 [[package]]
+name = "surprise"
+version = "0.1"
+description = "An easy-to-use library for recommender systems."
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "surprise-0.1-py2.py3-none-any.whl", hash = "sha256:0b5ad9b2e1c07ad74b93ece2e74beca83a05e32c7bd2ff2dcff7261e4cad0305"},
+]
+
+[package.dependencies]
+scikit-surprise = "*"
+
+[[package]]
 name = "tenacity"
 version = "9.1.4"
 description = "Retry code until it succeeds"
@@ -2678,4 +2692,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11"
-content-hash = "4624deada1a20a01be4695e40cb558f20dc19db15c9b4633054c8d7ca442f966"
+content-hash = "de1ee61e82cafa8666a969e92a33fe72c58aef817d591b12c8a789f6a5d0ffcb"

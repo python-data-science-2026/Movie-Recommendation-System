@@ -21,6 +21,30 @@ def build_SVD_recommender(rating_data:pd.DataFrame):
 def predict_recommendation(svd_model:SVD, username:str, item_id:int|str):
     return svd_model.predict(uid=username, iid=item_id).est
 
-def top_recommendation(items_list:list, pred_list:list, top:int=10):
-    sorted_idx = sorted(range(len(pred_list)), key=lambda k: pred_list[k])
-    return items_list[sorted_idx[:top]]
+def top_recommendation(items_list: list, pred_list: list, top: int = 10):
+    sorted_idx = sorted(
+        range(len(pred_list)),
+        key=lambda k: pred_list[k],
+        reverse=True
+    )
+
+    return [items_list[i] for i in sorted_idx[:top]]
+
+def recommend_movies(username: str, top_n: int = 5):
+    model = build_SVD_recommender(raiting_movies)
+
+    all_movies = raiting_movies["movie_id"].unique()
+
+    # bereits gesehene Filme
+    seen_movies = raiting_movies[
+        raiting_movies["username"] == username
+    ]["movie_id"].tolist()
+
+    # nur neue Filme
+    candidate_movies = [m for m in all_movies if m not in seen_movies]
+
+    preds = [predict_recommendation(model, username, movie) for movie in candidate_movies]
+
+    top_ids = top_recommendation(candidate_movies, preds, top=top_n)
+
+    return top_ids
