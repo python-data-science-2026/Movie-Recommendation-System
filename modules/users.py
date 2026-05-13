@@ -131,59 +131,65 @@ class User:
 
     def add_genre_preferencies(self, genre:str, rate=5):
         """
-        Adds a genre to the user's preferences.
+        Adds or updates a genre in the user's preferences.
 
         Args:
-            genre (str): The name of the genre to add.
+            genre (str): The name of the genre to add/update.
+            rate (int): The rating to assign.
 
         Returns:
-            bool: True if the preference was successfully added, False if it already exists.
+            bool: True if the preference was saved.
         """
         genre_object = Genre(genre)
         _ = genre_object.save()
+        gid = genre_object.get_id()
 
-        filtered_row = self.all_genre_preferencies[(self.all_genre_preferencies['username'] == self.username)&
-                                                    (self.all_genre_preferencies['genre_id'] == genre_object.get_id())]
-        if len(filtered_row) == 0:
+        mask = (self.all_genre_preferencies['username'] == self.username) & \
+               (self.all_genre_preferencies['genre_id'] == gid)
+        
+        if not self.all_genre_preferencies[mask].empty:
+            self.all_genre_preferencies.loc[mask, 'rating'] = rate
+        else:
             new_row = pd.DataFrame([{
-                'username':self.username,
-                'genre_id' : genre_object.get_id(),
-                'rating':rate
+                'username': self.username,
+                'genre_id': gid,
+                'rating': rate
             }])
+            self.all_genre_preferencies = pd.concat([self.all_genre_preferencies, new_row], ignore_index=True)
 
-            self.all_genre_preferencies = pd.concat([self.all_genre_preferencies, new_row])
-            self.all_genre_preferencies.to_csv(GENRE_PREF_DATA_PATH)
-            return True
-        return False
-
+        self.all_genre_preferencies.to_csv(GENRE_PREF_DATA_PATH, index=False)
+        return True
 
     def add_actors_preferencies(self, actor:str, rate = 5):
         """
-        Adds an actor to the user's preferences.
+        Adds or updates an actor in the user's preferences.
 
         Args:
-            actor (str): The full name of the actor to add.
+            actor (str): The full name of the actor to add/update.
+            rate (int): The rating to assign.
 
         Returns:
-            bool: True if the preference was successfully added, False if it already exists.
+            bool: True if the preference was saved.
         """
         actor_object = Actors(actor)
         _ = actor_object.save()
+        aid = actor_object.get_id()
 
-        filtered_row = self.all_actors_preferencies[(self.all_actors_preferencies['username'] == self.username)&
-                                                    (self.all_actors_preferencies['actor_id'] == actor_object.get_id())]
+        mask = (self.all_actors_preferencies['username'] == self.username) & \
+               (self.all_actors_preferencies['actor_id'] == aid)
 
-        if len(filtered_row) == 0:
+        if not self.all_actors_preferencies[mask].empty:
+            self.all_actors_preferencies.loc[mask, 'rating'] = rate
+        else:
             new_row = pd.DataFrame([{
-                'username':self.username,
-                'actor_id' : actor_object.get_id(),
-                'rating':rate
+                'username': self.username,
+                'actor_id': aid,
+                'rating': rate
             }])
+            self.all_actors_preferencies = pd.concat([self.all_actors_preferencies, new_row], ignore_index=True)
 
-            self.all_actors_preferencies = pd.concat([self.all_actors_preferencies, new_row])
-            self.all_actors_preferencies.to_csv(ACTORS_PREF_DATA_PATH)
-            return True
-        return False
+        self.all_actors_preferencies.to_csv(ACTORS_PREF_DATA_PATH, index=False)
+        return True
     
     def get_genre_preferencies(self):
         """
