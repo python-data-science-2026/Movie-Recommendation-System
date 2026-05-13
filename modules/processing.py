@@ -75,9 +75,10 @@ def merge_movies_details(movies_df:pd.DataFrame, actor_df:pd.DataFrame,
                         how="left", on="genre_id"
                     ).drop(['genre_id'], axis=1)
     
-    tmp2 = tmp2.groupby(['title', 'release_date']).agg({'actor_full_name':lambda x: x.tolist(),
-                                 'genre_name':lambda x: x.tolist()}).rename({'actor_full_name':'actors', 
-                                                                             'genre_name':'genres'}, axis=1)
+    tmp2 = tmp2.groupby(['title', 'release_date']).agg({
+        'actor_full_name': lambda x: list(x.dropna().unique()),
+        'genre_name': lambda x: list(x.dropna().unique())
+    }).rename({'actor_full_name':'actors', 'genre_name':'genres'}, axis=1)
     return tmp2.reset_index() 
 
 

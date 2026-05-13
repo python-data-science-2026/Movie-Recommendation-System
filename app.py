@@ -7,7 +7,7 @@ from modules.users import User
 from modules.movies import Movies
 from modules.watch_movies import Watch_Movie, user_history
 from modules.recommendation import build_SVD_recommender, predict_recommendation, top_recommendation
-from modules.processing import movies_not_yet_watched, merge_genre_preferencies, merge_actor_preferencies
+from modules.processing import movies_not_yet_watched, merge_genre_preferencies, merge_actor_preferencies, merge_movies_details
 
 
 # --- Configuration ---
@@ -82,11 +82,17 @@ def user_account_view():
             
             options = genres_list if p_type == "Genre" else actors_list
             selected_items = st.multiselect(f"Select {p_type}s", options=options)
+            extra_items = st.text_input(f"Can't find a {p_type}? Type name(s) here (comma separated):")
             p_rate = st.slider("Preference Strength", 1, 5, 5)
             
             if st.button("Save Preferences"):
-                if selected_items:
-                    for item in selected_items:
+                all_items = selected_items.copy()
+                if extra_items:
+                    new_ones = [x.strip() for x in extra_items.split(',') if x.strip()]
+                    all_items.extend(new_ones)
+
+                if all_items:
+                    for item in all_items:
                         if p_type == "Genre":
                             user.add_genre_preferencies(item, p_rate)
                         else:
@@ -139,6 +145,7 @@ def user_account_view():
                 # Here we use multiselect for existing, but could also add a text field for "Other".
                 sel_genres = st.multiselect("Genres", options=genres_list)
                 sel_actors = st.multiselect("Actors", options=actors_list)
+                extra_actors = st.text_input("Other Actors (comma separated)")
             
             comment = st.text_area("Comment")
             
@@ -148,6 +155,10 @@ def user_account_view():
                     movie.save()
                     for g in sel_genres: movie.add_genre(g)
                     for a in sel_actors: movie.add_actor(a)
+                    
+                    if extra_actors:
+                        for a in [x.strip() for x in extra_actors.split(',') if x.strip()]:
+                            movie.add_actor(a)
                     
                     wm = Watch_Movie(user.username, movie.get_id(), watch_date.strftime('%Y-%m-%d'), rating, comment)
                     wm.save()
@@ -179,31 +190,79 @@ def user_account_view():
 
 # --- View: Search Movies ---
 def search_movies_view():
-    st.title("🔍 Explore Movies")
-    query = st.text_input("Search by title...", placeholder="e.g. Inception")
-    
+    st.title("Explore Movies")
+
+    # Load all necessary datasets
     movies_df = load_datasets("movies.csv")
     watch_df = load_datasets("watch_movies.csv")
-    
-    # Calculate global stats
+    actors_df = load_datasets("actors.csv")
+    genres_df = load_datasets("genres.csv")
+    m_actors_df = load_datasets("movies_actors.csv")
+    m_genres_df = load_datasets("movies_genres.csv")
+
+    # Use the pre-built function for base data
+    base_df = merge_movies_details(movies_df, actors_df, genres_df, m_actors_df, m_genres_df)
+
+    # Calculate watch and rating stats
     if not watch_df.empty:
         stats = watch_df.groupby('movie_id').agg(
             watch_count=('movie_id', 'count'),
             mean_rating=('rating', 'mean')
         ).reset_index()
-        results = pd.merge(movies_df, stats, left_on='id', right_on='movie_id', how='left').fillna(0)
+        # Need to map movie_id back to title/release_date for merging with base_df
+        stats_with_info = pd.merge(stats, movies_df[['id', 'title', 'release_date']], left_on='movie_id', right_on='id')
+        results = pd.merge(base_df, stats_with_info[['title', 'release_date', 'watch_count', 'mean_rating']], 
+                           on=['title', 'release_date'], how='left').fillna(0)
     else:
-        results = movies_df.copy()
+        results = base_df.copy()
         results['watch_count'] = 0
         results['mean_rating'] = 0.0
 
-    if query:
-        results = results[results['title'].str.contains(query, case=False, na=False)]
-    
+    # UI Filters
+    with st.expander("Search Filters", expanded=True):
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            q_title = st.text_input("Search by title...", placeholder="e.g. Inception")
+        with col2:
+            q_genres = st.multiselect("Filter by Genre", options=sorted(genres_df['name'].unique().tolist()))
+        with col3:
+            # Handle empty/invalid release_date safely
+            valid_dates = pd.to_datetime(results['release_date'], errors='coerce')
+            years = valid_dates.dt.year.dropna().unique().astype(int)
+            if len(years) > 0:
+                min_y, max_y = int(min(years)), int(max(years))
+                if min_y == max_y:
+                    st.write(f"Year: {min_y}")
+                    q_years = (min_y, max_y)
+                else:
+                    q_years = st.slider("Year Range", min_y, max_y, (min_y, max_y))
+            else:
+                q_years = None
+
+    # Apply filters
+    filtered_results = results.copy()
+    if q_title:
+        filtered_results = filtered_results[filtered_results['title'].str.contains(q_title, case=False, na=False)]
+    if q_genres:
+        # Check if movie has any of the selected genres
+        filtered_results = filtered_results[filtered_results['genres'].apply(
+            lambda x: any(g in x for g in q_genres) if isinstance(x, list) else False
+        )]
+    if q_years:
+        v_dates = pd.to_datetime(filtered_results['release_date'], errors='coerce')
+        filtered_results = filtered_results[(v_dates.dt.year >= q_years[0]) & (v_dates.dt.year <= q_years[1])]
+
+    # Formatting lists for display
+    display_df = filtered_results.copy()
+    display_df['genres'] = display_df['genres'].apply(lambda x: ", ".join([str(i) for i in x if pd.notna(i)]) if isinstance(x, list) else "")
+    display_df['actors'] = display_df['actors'].apply(lambda x: ", ".join([str(i) for i in x if pd.notna(i)]) if isinstance(x, list) else "")
+
     st.dataframe(
-        results[['title', 'release_date', 'watch_count', 'mean_rating']].rename(columns={
+        display_df[['title', 'release_date', 'genres', 'actors', 'watch_count', 'mean_rating']].rename(columns={
             'title': 'Title',
             'release_date': 'Released',
+            'genres': 'Genres',
+            'actors': 'Actors',
             'watch_count': 'Total Watches',
             'mean_rating': 'Avg Rating'
         }),
