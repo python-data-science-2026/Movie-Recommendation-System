@@ -40,7 +40,7 @@ poetry install
 ## Run the application  
 ```bash
 # Run the streamlit app
-poetry run -m streamlit run app.py
+poetry run streamlit run app.py
 # Run the CLI app
 poetry run python main.py
 ```
