@@ -284,7 +284,7 @@ def user_account_view():
             st.info("Start watching and rating movies to see recommendations here!")
         else:
             rec_strategy = st.radio("Recommendation Strategy", 
-                                    ["Discorery-based", "Preferences-based"], 
+                                    ["Discover Something New", "Match My Preferences"], 
                                     horizontal=True,
                                     help="Classic uses direct movie ratings. Genre Discovery predicts your interest in genres to find new types of movies.")
             
