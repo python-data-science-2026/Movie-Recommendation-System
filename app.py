@@ -170,8 +170,8 @@ def user_account_view():
             col_a, col_b = st.columns(2)
             with col_a:
                 title = st.text_input("Movie Title", value=search_title if search_title else "")
-                rel_date = st.date_input("Release Date", min_value=datetime(1920,value=default_rel_date)
-                watch_date = st.date_input("Watch Date", min_value=datetime(1920,value=datetime.now())
+                rel_date = st.date_input("Release Date", min_value=datetime(1920),value=default_rel_date)
+                watch_date = st.date_input("Watch Date", min_value=datetime(1920),value=datetime.now())
             with col_b:
                 rating = st.select_slider("My Rating", options=[1, 2, 3, 4, 5], value=3)
                 sel_genres = st.multiselect("Genres", options=genres_list, default=default_genres)
