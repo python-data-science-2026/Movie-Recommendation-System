@@ -14,8 +14,8 @@ from datetime import datetime
 from modules.utils import check_datasets, load_datasets
 from modules.users import User
 from modules.movies import Movies
-from modules.watch_movies import Watch_Movie, user_history
-from modules.recommendation import build_SVD_recommender, predict_recommendation, top_recommendation
+from modules.watch_movies import Watch_Movie
+from modules.recommendation import build_SVD_recommender, predict_recommendation, top_recommendation, recommend_movies_by_genre_svd
 from modules.processing import movies_not_yet_watched, merge_genre_preferencies, merge_actor_preferencies, merge_movies_details
 
 st.set_page_config(page_title="MovieRec", page_icon="🎬", layout="wide")
@@ -68,6 +68,17 @@ def auth_view():
                             st.error("Passwords do not match.")
                     else:
                         st.error("Username, Password and Confirmation are required.")
+
+
+def get_classic_recommendations(username, watch_data, unwatched_movies, num_recs):
+    model = build_SVD_recommender(watch_data)
+    movie_ids = unwatched_movies['id'].tolist()
+    preds = [predict_recommendation(model, username, mid) for mid in movie_ids]
+    top_ids = top_recommendation(movie_ids, preds, top=num_recs)
+    return unwatched_movies[unwatched_movies['id'].isin(top_ids)]
+
+def get_genre_discovery_recommendations(username, num_recs):
+    return recommend_movies_by_genre_svd(username, top_n=num_recs)
 
 def user_account_view():
     user = st.session_state.user
@@ -138,7 +149,7 @@ def user_account_view():
         
         movies_df = load_datasets("movies.csv")
         
-        st.info("💡 Search for an existing movie to pre-fill its details, or just type a new one below.")
+        st.info("Search for an existing movie to pre-fill its details, or just type a new one below.")
         search_title = st.selectbox("Search for a movie in our database", 
                                     options=[""] + sorted(movies_df['title'].unique().tolist()),
                                     index=0,
@@ -170,8 +181,8 @@ def user_account_view():
             col_a, col_b = st.columns(2)
             with col_a:
                 title = st.text_input("Movie Title", value=search_title if search_title else "")
-                rel_date = st.date_input("Release Date", min_value=datetime(1920),value=default_rel_date)
-                watch_date = st.date_input("Watch Date", min_value=datetime(1920),value=datetime.now())
+                rel_date = st.date_input("Release Date", min_value=datetime(1920, 1, 1), value=default_rel_date, max_value=datetime.now())
+                watch_date = st.date_input("Watch Date", min_value=datetime(1920, 1, 1), value=datetime.now(), max_value=datetime.now())
             with col_b:
                 rating = st.select_slider("My Rating", options=[1, 2, 3, 4, 5], value=3)
                 sel_genres = st.multiselect("Genres", options=genres_list, default=default_genres)
@@ -272,39 +283,51 @@ def user_account_view():
         if len(user_watches) < 1:
             st.info("Start watching and rating movies to see recommendations here!")
         else:
+            rec_strategy = st.radio("Recommendation Strategy", 
+                                    ["Discorery-based", "Preferences-based"], 
+                                    horizontal=True,
+                                    help="Classic uses direct movie ratings. Genre Discovery predicts your interest in genres to find new types of movies.")
+            
             unwatched = movies_not_yet_watched(user.username, movies_df, watch_df)
             if unwatched.empty:
                 st.write("You've seen everything in our catalog!")
             else:
                 num_recs = st.slider("Number of recommendations to display", 1, 20, 5)
                 with st.spinner("Calculating best matches..."):
-                    model = build_SVD_recommender(watch_df[['username', 'movie_id', 'rating']])
-                    movie_ids = unwatched['id'].tolist()
-                    preds = [predict_recommendation(model, user.username, mid) for mid in movie_ids]
-                    top_ids = top_recommendation(movie_ids, preds, top=num_recs)
-                    recs = unwatched[unwatched['id'].isin(top_ids)]
+                    if rec_strategy == "Classic (Movie-based)":
+                        recs = get_classic_recommendations(
+                             user.username, 
+                             watch_df[['username', 'movie_id', 'rating']], 
+                             unwatched, 
+                             num_recs
+                         )
+                    else:
+                        recs = get_genre_discovery_recommendations(user.username, num_recs)
                     
                     actors_df = load_datasets("actors.csv")
                     genres_df = load_datasets("genres.csv")
                     m_actors_df = load_datasets("movies_actors.csv")
                     m_genres_df = load_datasets("movies_genres.csv")
                     
-                    enriched_recs = merge_movies_details(recs, actors_df, genres_df, m_actors_df, m_genres_df)
-                    
-                    display_recs = enriched_recs.copy()
-                    display_recs['genres'] = display_recs['genres'].apply(lambda x: ", ".join(x) if isinstance(x, list) else "")
-                    display_recs['actors'] = display_recs['actors'].apply(lambda x: ", ".join(x) if isinstance(x, list) else "")
-                    
-                    st.dataframe(
-                        display_recs[['title', 'release_date', 'genres', 'actors']].rename(columns={
-                            'title': 'Title',
-                            'release_date': 'Released',
-                            'genres': 'Genres',
-                            'actors': 'Actors'
-                        }),
-                        use_container_width=True,
-                        hide_index=True
-                    )
+                    if not recs.empty:
+                        enriched_recs = merge_movies_details(recs, actors_df, genres_df, m_actors_df, m_genres_df)
+                        
+                        display_recs = enriched_recs.copy()
+                        display_recs['genres'] = display_recs['genres'].apply(lambda x: ", ".join(x) if isinstance(x, list) else "")
+                        display_recs['actors'] = display_recs['actors'].apply(lambda x: ", ".join(x) if isinstance(x, list) else "")
+                        
+                        st.dataframe(
+                            display_recs[['title', 'release_date', 'genres', 'actors']].rename(columns={
+                                'title': 'Title',
+                                'release_date': 'Released',
+                                'genres': 'Genres',
+                                'actors': 'Actors'
+                            }),
+                            use_container_width=True,
+                            hide_index=True
+                        )
+                    else:
+                        st.warning("No recommendations found for this strategy.")
 
 def search_movies_view():
     st.title("Explore Movies")
