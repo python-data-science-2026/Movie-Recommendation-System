@@ -45,6 +45,9 @@ poetry run streamlit run app.py
 poetry run python main.py
 ```
 
+## Available online
+Our movie recommendation app is available directly on [Hugging Face Spaces](https://huggingface.co/spaces/MOISECHRIST/Movie_Recommendation)
+
 ## Example 
 
 ```
