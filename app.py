@@ -17,6 +17,7 @@ from modules.movies import Movies
 from modules.watch_movies import Watch_Movie
 from modules.recommendation import build_SVD_recommender, predict_recommendation, top_recommendation, recommend_movies_by_genre_svd
 from modules.processing import movies_not_yet_watched, merge_genre_preferencies, merge_actor_preferencies, merge_movies_details
+from modules.analysis import get_user_genre_trends, get_user_actor_trends, get_user_watch_activity, identify_discovery_genres, get_global_genre_trends
 
 st.set_page_config(page_title="MovieRec", page_icon="🎬", layout="wide")
 
@@ -87,7 +88,7 @@ def user_account_view():
     genres_list = load_datasets("genres.csv")['name'].tolist()
     actors_list = load_datasets("actors.csv")['full_name'].tolist()
     
-    tab_pref, tab_watch, tab_hist, tab_rec = st.tabs(["Preferences", "Add Watched Movie", "Watch History", "Recommendations"])
+    tab_pref, tab_watch, tab_hist, tab_rec, tab_trends = st.tabs(["Preferences", "Add Watched Movie", "Watch History", "Recommendations", "Insights & Trends"])
     
     with tab_pref:
         col1, col2 = st.columns(2)
@@ -284,7 +285,7 @@ def user_account_view():
             st.info("Start watching and rating movies to see recommendations here!")
         else:
             rec_strategy = st.radio("Recommendation Strategy", 
-                                    ["Discover Something New", "Match My Preferences"], 
+                                    ["Match My Preferences", "Discover Something New"], 
                                     horizontal=True,
                                     help="Classic uses direct movie ratings. Genre Discovery predicts your interest in genres to find new types of movies.")
             
@@ -294,7 +295,7 @@ def user_account_view():
             else:
                 num_recs = st.slider("Number of recommendations to display", 1, 20, 5)
                 with st.spinner("Calculating best matches..."):
-                    if rec_strategy == "Classic (Movie-based)":
+                    if rec_strategy == "Discover Something New":
                         recs = get_classic_recommendations(
                              user.username, 
                              watch_df[['username', 'movie_id', 'rating']], 
@@ -329,6 +330,94 @@ def user_account_view():
                     else:
                         st.warning("No recommendations found for this strategy.")
 
+    with tab_trends:
+        st.header("Personal & Community Insights")
+        
+        genre_trends = get_user_genre_trends(user.username)
+        actor_trends = get_user_actor_trends(user.username)
+        watch_activity = get_user_watch_activity(user.username)
+        discovery_genres = identify_discovery_genres(user.username)
+        global_genre_trends = get_global_genre_trends()
+
+        if genre_trends.empty:
+            st.info("Watch more movies to see your trends and insights!")
+        else:
+            m1, m2, m3 = st.columns(3)
+            with m1:
+                total_watched = int(len(full_history))
+                st.metric("My Total Movies Watched", total_watched)
+            with m2:
+                top_genre = genre_trends.iloc[0]['name']
+                st.metric("My Favorite Genre", top_genre)
+            with m3:
+                avg_user_rating = genre_trends['avg_rating'].mean()
+                st.metric("My Avg Rating", f"{avg_user_rating:.1f}")
+
+            st.divider()
+
+            val = st.selectbox("View by", options=['Avg rating', 'Total watches'])
+            col1, col2 = st.columns(2, gap="large")
+            dict1 = {"Avg rating":"avg_rating","Total watches":"total_watches"}
+            dict2 = {"Avg rating":"avg_rating","Total watches":"watch_count"}
+            with col1:
+                with st.container():
+                    st.subheader("My Top Genres")
+                    st.bar_chart(genre_trends.set_index('name')[dict2[val]], height=300)
+                
+                st.divider()
+                
+                with st.container():
+                    st.subheader("Watch Activity")
+                    if not watch_activity.empty:
+                        st.line_chart(watch_activity.set_index('month_year')['count'], height=250)
+                    else:
+                        st.write("No activity data available yet.")
+
+            with col2:
+                with st.container():
+                    st.subheader("Community Trends")
+                    if not global_genre_trends.empty:
+                        community_top = global_genre_trends[global_genre_trends['total_watches'] >= 1].sort_values(dict1[val], ascending=False).head(10)
+                        st.bar_chart(community_top.set_index('name')[dict1[val]], height=300)
+                    else:
+                        st.write("Not enough community data yet.")
+                
+                st.divider()
+                
+                with st.container():
+                    st.subheader("My Favorite Actors")
+                    if not actor_trends.empty:
+                        st.dataframe(
+                            actor_trends.head(5)[['full_name', 'watch_count', 'avg_rating']].rename(columns={
+                                'full_name': 'Actor',
+                                'watch_count': 'Watches',
+                                'avg_rating': 'Avg Rating'
+                            }), 
+                            hide_index=True, 
+                            use_container_width=True
+                        )
+                    else:
+                        st.write("No actor preferences recorded.")
+
+            st.divider()
+            
+            # Discovery Section
+            with st.container():
+                st.subheader("Discovery: Expand Your Horizons")
+                if discovery_genres:
+                    st.write("Based on your preferences, you might enjoy exploring these genres you haven't watched much:")
+                    
+                    disc_cols = st.columns(len(discovery_genres))
+                    for i, genre in enumerate(discovery_genres):
+                        with disc_cols[i]:
+                            st.info(f"**{genre}**")
+                    
+                    if st.button("Find movies in these genres", use_container_width=True):
+                        st.session_state.discovery_genre_filter = discovery_genres
+                        st.toast("Filters applied! Go to 'Search Movies' to see results.")
+                else:
+                    st.write("Keep rating genres in 'Preferences' to unlock discovery insights.")
+
 def search_movies_view():
     st.title("Explore Movies")
 
@@ -359,7 +448,13 @@ def search_movies_view():
         with col1:
             q_title = st.text_input("Search by title...", placeholder="e.g. Inception")
         with col2:
-            q_genres = st.multiselect("Filter by Genre", options=sorted(genres_df['name'].unique().tolist()))
+            default_g = st.session_state.get('discovery_genre_filter', [])
+            q_genres = st.multiselect("Filter by Genre", 
+                                      options=sorted(genres_df['name'].unique().tolist()),
+                                      default=default_g)
+            # Clear it after use so it doesn't persist forever
+            if 'discovery_genre_filter' in st.session_state:
+                del st.session_state['discovery_genre_filter']
         with col3:
             valid_dates = pd.to_datetime(results['release_date'], errors='coerce')
             years = valid_dates.dt.year.dropna().unique().astype(int)

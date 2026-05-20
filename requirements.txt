@@ -1,0 +1,5 @@
+pathlib==1.0.1
+streamlit==1.57.0
+numpy==1.26.4
+pandas==2.1.4
+scikit-surprise==1.1.4

@@ -9,8 +9,9 @@ from modules.utils import check_datasets, check_rating, validate_date, load_data
 from modules.users import User
 from modules.movies import Movies
 from modules.watch_movies import Watch_Movie, user_history
-from modules.recommendation import build_SVD_recommender, predict_recommendation, top_recommendation
-from modules.processing import movies_not_yet_watched, merge_genre_preferencies, merge_actor_preferencies, pref_user_mat
+from modules.recommendation import recommend_movies_by_genre_svd
+from modules.processing import merge_genre_preferencies, merge_actor_preferencies
+from modules.analysis import get_user_genre_trends, get_user_actor_trends, get_user_watch_activity, identify_discovery_genres
 
 
 def register_flow():
@@ -189,35 +190,41 @@ def get_recommendations_flow(username):
     """
     print("\n--- Movie Recommendations ---")
     
-    # Load data
-    movies_df = load_datasets("movies.csv")
-    watch_movies_df = load_datasets("watch_movies.csv")
+    recommendations = recommend_movies_by_genre_svd(username, top_n=5)
     
-    if watch_movies_df.empty:
-        print("Not enough data to provide recommendations. Please watch and rate some movies first!")
+    if recommendations.empty:
+        print("Not enough data to provide personalized recommendations.")
+        print("Please watch some movies or set your genre preferences!")
         return
 
-    # Find movies not yet watched
-    unwatched_movies = movies_not_yet_watched(username, movies_df, watch_movies_df)
-    
-    if unwatched_movies.empty:
-        print("You've watched everything in our database! Stay tuned for more.")
-        return
-
-    # Train model
-    rating_data = watch_movies_df[['username', 'movie_id', 'rating']]
-    model = build_SVD_recommender(rating_data)
-    
-    # Predict ratings
-    movie_ids = unwatched_movies['id'].tolist()
-    predictions = [predict_recommendation(model, username, mid) for mid in movie_ids]
-    
-    # Get top 5 recommendations
-    top_ids = top_recommendation(movie_ids, predictions, top=5)
-    
-    print("Based on your history, you might like:")
-    recommendations = unwatched_movies[unwatched_movies['id'].isin(top_ids)]
+    print("Based on your history and preferences, you might like:")
     print(recommendations[['title', 'release_date']].to_string(index=False))
+
+
+def show_trends_flow(username):
+    """
+    Displays personal trends and discovery insights for the user.
+    """
+    print("\n--- Your Trends & Insights ---")
+    
+    genre_trends = get_user_genre_trends(username)
+    if genre_trends.empty:
+        print("Not enough data to analyze trends. Go watch some movies!")
+        return
+
+    print("\n[ Top Genres ]")
+    print(genre_trends.head(5)[['name', 'watch_count', 'avg_rating']].to_string(index=False))
+
+    activity = get_user_watch_activity(username)
+    if not activity.empty:
+        print("\n[ Watch Activity (Last 6 months) ]")
+        print(activity.tail(6).to_string(index=False))
+
+    discovery = identify_discovery_genres(username)
+    if discovery:
+        print("\n[ Discovery: New Genres to Explore ]")
+        for g in discovery:
+            print(f"- {g}")
 
 
 def main():
@@ -254,6 +261,7 @@ def main():
         print("3. Show watched movies")
         print("4. Show preferences")
         print("5. Get recommendations")
+        print("6. Show trends & insights")
         print("0. Logout")
 
         choice = input("Choose an option: ").strip()
@@ -268,6 +276,8 @@ def main():
             show_preferences_flow(current_user)
         elif choice == "5":
             get_recommendations_flow(current_user.username)
+        elif choice == "6":
+            show_trends_flow(current_user.username)
         elif choice == "0":
             print("Logged out.")
             break
