@@ -359,17 +359,19 @@ def user_account_view():
             col1, col2 = st.columns(2, gap="large")
             dict1 = {"Avg rating":"avg_rating","Total watches":"total_watches"}
             dict2 = {"Avg rating":"avg_rating","Total watches":"watch_count"}
+            dict3 = {"Total watches":"watch_count", "Avg rating":"avg_rating"}
+            colors = {"Avg rating":"blue","Total watches":"green"}
             with col1:
                 with st.container():
                     st.subheader("My Top Genres")
-                    st.bar_chart(genre_trends.set_index('name')[dict2[val]], height=300)
+                    st.bar_chart(genre_trends.set_index('name')[dict2[val]], height=300, color=colors[val])
                 
                 st.divider()
                 
                 with st.container():
                     st.subheader("Watch Activity")
                     if not watch_activity.empty:
-                        st.line_chart(watch_activity.set_index('month_year'), height=250, color=["green", "blue"])
+                        st.line_chart(watch_activity.set_index('month_year')[dict3[val]], height=250, color=colors[val])
                     else:
                         st.write("No activity data available yet.")
 
@@ -378,7 +380,7 @@ def user_account_view():
                     st.subheader("Community Trends")
                     if not global_genre_trends.empty:
                         community_top = global_genre_trends[global_genre_trends['total_watches'] >= 1].sort_values(dict1[val], ascending=False).head(10)
-                        st.bar_chart(community_top.set_index('name')[dict1[val]], height=300)
+                        st.bar_chart(community_top.set_index('name')[dict1[val]], height=300, color=colors[val])
                     else:
                         st.write("Not enough community data yet.")
                 
