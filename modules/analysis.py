@@ -65,7 +65,10 @@ def get_user_watch_activity(username: str):
     user_watch['watch_date'] = pd.to_datetime(user_watch['watch_date'])
     user_watch['month_year'] = user_watch['watch_date'].dt.to_period('M').astype(str)
     
-    activity = user_watch.groupby('month_year').size().reset_index(name='count')
+    activity = user_watch.groupby('month_year').agg(
+        watch_count=('movie_id', 'count'),
+        avg_rating=('rating', 'mean')
+    ).reset_index()
     return activity.sort_values('month_year')
 
 def identify_discovery_genres(username: str, top_n: int = 3):

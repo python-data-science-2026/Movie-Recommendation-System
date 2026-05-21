@@ -369,7 +369,7 @@ def user_account_view():
                 with st.container():
                     st.subheader("Watch Activity")
                     if not watch_activity.empty:
-                        st.line_chart(watch_activity.set_index('month_year')['count'], height=250)
+                        st.line_chart(watch_activity.set_index('month_year'), height=250, color=["green", "blue"])
                     else:
                         st.write("No activity data available yet.")
 
