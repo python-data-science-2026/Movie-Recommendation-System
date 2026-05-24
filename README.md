@@ -59,7 +59,7 @@ Choose an option: 2
 
 --- Login ---
 Username: mmeka
-Password: Qwerty@1234
+Password: 
 Welcome, mmeka!
 
 === Movie Recommendation System === [mmeka]
@@ -68,6 +68,7 @@ Welcome, mmeka!
 3. Show watched movies
 4. Show preferences
 5. Get recommendations
+6. Show trends & insights
 0. Logout
 
 Choose an option: 1
@@ -130,12 +131,37 @@ Stephen Spinella             1          2001-09-07
 Choose an option: 5
 
 --- Movie Recommendations ---
-Based on your history, you might like:
-                                   title release_date
-Harry Potter and the Prisoner of Azkaban   2004-05-31
-                       Anna and the King   1999-12-16
-                            Last Holiday   2006-01-13
-            The Greatest Story Ever Told   1965-02-15
-                   To Kill a Mockingbird   1962-12-25
+Based on your history and preferences, you might like:
+                           title release_date
+               The Peanuts Movie   2015-11-05
+                 Black Hawk Down   2001-12-28
+                We Were Soldiers   2002-03-01
+              Lion of the Desert   1981-04-17
+Mongol: The Rise of Genghis Khan   2007-09-20
 
+Choose an option: 6
+
+--- Your Trends & Insights ---
+
+[ Top Genres ]
+    name  watch_count  avg_rating
+   Drama         2624    3.012805
+  Comedy         1914    2.990125
+  Action         1270    2.993543
+Thriller         1173    2.971014
+ Romance          904    2.980199
+
+[ Watch Activity (Last 6 months) ]
+month_year  watch_count  avg_rating
+   2025-12           34    2.958824
+   2026-01           31    2.948387
+   2026-02           18    2.900000
+   2026-03           28    2.460714
+   2026-04           29    2.803448
+   2026-05           12    2.958333
+
+[ Discovery: New Genres to Explore ]
+- War
+- History
+- Music
 ```

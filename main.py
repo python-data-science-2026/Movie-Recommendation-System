@@ -4,7 +4,7 @@ Main entry point for the Movie Recommendation System.
 This module handles the user interface and orchestration of registration,
 login, movie tracking, and preference management.
 """
-
+from getpass import getpass
 from modules.utils import check_datasets, check_rating, validate_date, load_datasets
 from modules.users import User
 from modules.movies import Movies
@@ -55,7 +55,7 @@ def login_flow():
     """
     print("\n--- Login ---")
     username = input("Username: ").strip()
-    password = input("Password: ").strip()
+    password = getpass("Password: ").strip()
 
     user = User(username, password)
     if user.login():
